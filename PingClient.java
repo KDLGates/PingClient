@@ -29,7 +29,7 @@ public class PingClient {
             System.out.println("Required arguments: <host> <port> (i.e., the server IP address and its port)");
             return;
         }
-        int port = Integer.parseInt(args[0]);
+        int port = Integer.parseInt(args[1]);
 // Create random number generator for use in simulating
 // packet loss and network delay.
         Random random = new Random();
@@ -63,7 +63,10 @@ DatagramPacket sendPacket = new DatagramPacket(bytesToSend,  // Sending packet
         bytesToSend.length, serverAddress, servPort);
 DatagramPacket receivePacket =                              // Receiving packet
         new DatagramPacket(new byte[bytesToSend.length], bytesToSend.length);
-int roundTripTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
+// int roundTripTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
+int roundTripTime = 0;
+int min = 0;
+int max = 0;
 int totalTimes = 0;
 int sentTime = 0;
 int receivedPacketTime = 0;
@@ -86,26 +89,54 @@ do {
       } catch (InterruptedIOException e) {  // We did not get anything
         System.out.println("Timed out, " + (10-sequenceCount) + " more tries...");
       }
-      totalTimes += roundTripTime;
-      sequenceCount++; // Increment 'til 10 tries, success or fail, are made
+      
+     
       
         if (receivedResponse) {
+            int initialTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
             receivedPacketTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
-            System.out.println("Received: " + new String(receivePacket.getData()));
+            
+            roundTripTime = receivedPacketTime - sentTime;
+            System.out.println("Ping response received. Latency: " + roundTripTime);
+            
+            // System.out.println("Received: " + new String(receivePacket.getData()) + );
         }
         else {
             System.out.println("No response -- giving up.");
         }
+      
+        // "naive method", we set the initial ping result as both min and max
+        if (sequenceCount == 0) {
+            min = receivedPacketTime - sentTime;
+            max = receivedPacketTime - sentTime;
+        }
+        
+        if(roundTripTime > max)
+        {
+            max = roundTripTime;
+        }
+        if(roundTripTime < min)
+        {
+            min = roundTripTime;
+        }
+        
+        totalTimes += roundTripTime; // add RTT to sum of times
+        sequenceCount++; // Increment 'til 10 tries, success or fail, are made
       
     } while ((!receivedResponse) && (sequenceCount < 10));
 
 
     
     socket.close();
+        // Print results
+    System.out.println("Max: " + max);
+    System.out.println("Max: " + min);
+    int avgRTT = totalTimes / 10;
+    System.out.println("Average Round Trip Time: " + avgRTT);
+
   }
  }
 }
-
 /*
 // Decide whether to reply, or simulate packet loss.
             if (random.nextDouble() < LOSS_RATE) {
