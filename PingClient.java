@@ -4,7 +4,6 @@ Namely, URL: http://cs.baylor.edu/~donahoo/practical/JavaSockets/textcode.html ,
 As a base to modify, we renamed the PingServer client to PingClient, then used parts from UDPEchoClientTimeout.java and other examples from this booksite.
 Stack Overflow: http://stackoverflow.com/questions/18571223/how-to-convert-java-string-into-byte
  */
-package pingclient;
 
 import java.io.*;
 import java.net.*;
