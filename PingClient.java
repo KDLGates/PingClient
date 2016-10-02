@@ -5,6 +5,7 @@ As a base to modify, we renamed the PingServer client to PingClient, then used p
 Stack Overflow: http://stackoverflow.com/questions/18571223/how-to-convert-java-string-into-byte
  */
 
+
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -27,10 +28,8 @@ public class PingClient {
 // Create a datagram socket for receiving and sending UDP packets
 // through the port specified on the command line.
         DatagramSocket socket = new DatagramSocket(port);
-// Create a datagram packet to hold incomming UDP packet.
-            DatagramPacket request = new DatagramPacket(new byte[1024], 1024);
-// Block until the host receives a UDP packet.
-//          socket.receive(request);
+// Create a request packet
+        DatagramPacket request = new DatagramPacket(new byte[1024], 1024);
 
 
 InetAddress serverAddress = InetAddress.getByName(args[0]);  // Server address
@@ -48,6 +47,7 @@ long roundTripTime = 0;
 long min = -1;
 long max = -1;
 int totalTimes = 0;
+int numResponses = 0; // number of successful responses used for avg. ping
 
 // This section is taken and modified from the booksite's UDPEchoClient.java
 // For 10 seconds, we'll make 10 Echo attempts
@@ -64,7 +64,6 @@ do {
       DatagramPacket sendPacket = new DatagramPacket(bytesToSend,  // Sending packet
         bytesToSend.length, serverAddress, serverPort);
       socket.send(sendPacket);          // Send the ping string
-      // sentTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
       sentTime = new Date().getTime(); // Mark the time we sent the ping
       socket.setSoTimeout(1000); // Set the timeout delay of 1000ms
       
@@ -76,23 +75,22 @@ do {
         
         if (!receivePacket.getAddress().equals(serverAddress))  // Check source
           throw new IOException("Received packet from an unknown source");
-
+        receivedPacketTime = new Date().getTime();
         receivedResponse = true;
       } catch (InterruptedIOException e) {  // We did not get anything
         System.out.println("Ping number " + (sequenceCount + 1) + " of 10 timed out.");
+        receivedResponse = false;
       }
       
      
       
         if (receivedResponse) {
-            // initialTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
-            receivedPacketTime = new Date().getTime();
-            // receivedPacketTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
-            
+            numResponses++;
             roundTripTime = receivedPacketTime - sentTime;
-            System.out.println("Ping response received. Latency: " + roundTripTime);
+            totalTimes += roundTripTime; // add RTT to sum of times
+            receivedPacketTime = new Date().getTime();
             
-            // System.out.println("Received: " + new String(receivePacket.getData()) + );
+            System.out.println("Ping response received. Latency: " + roundTripTime);
         }
         
       
@@ -111,8 +109,7 @@ do {
         {
             min = roundTripTime;
         }
-        
-        totalTimes += roundTripTime; // add RTT to sum of times
+       
         sequenceCount++; // Increment 'til 10 tries, success or fail, are made
       
     } while (sequenceCount < 10);
@@ -126,7 +123,7 @@ do {
     else {
         System.out.println("Min latency: " + min);
         System.out.println("Max latency: " + max);
-        int avgRTT = totalTimes / 10;
+        int avgRTT = totalTimes / numResponses;
         System.out.println("Average Round Trip Time: " + avgRTT);
     }
   }
