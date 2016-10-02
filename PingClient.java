@@ -90,6 +90,7 @@ do {
             totalTimes += roundTripTime; // add RTT to sum of times
             receivedPacketTime = new Date().getTime();
             
+            Thread.sleep(1000 - roundTripTime);
             System.out.println("Ping response received. Latency: " + roundTripTime);
         }
         
