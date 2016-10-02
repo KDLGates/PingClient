@@ -11,9 +11,8 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-/*
-* Server to process ping requests over UDP.
- */
+/* UDP Ping Client */
+
 public class PingClient {
 
     public static void main(String[] args) throws Exception { 
@@ -29,17 +28,11 @@ public class PingClient {
 // Create a datagram socket for receiving and sending UDP packets
 // through the port specified on the command line.
         DatagramSocket socket = new DatagramSocket(port);
-// Processing loop.
-        while (true) {
 // Create a datagram packet to hold incomming UDP packet.
             DatagramPacket request = new DatagramPacket(new byte[1024], 1024);
 // Block until the host receives a UDP packet.
 //          socket.receive(request);
 
-/* Presumed Server Part
-// Print the received data.
-            printData(request);
-*/
 
 InetAddress serverAddress = InetAddress.getByName(args[0]);  // Server address
 // Convert input String to bytes using the default character encoding
@@ -49,18 +42,12 @@ int serverPort = Integer.parseInt(args[1]);
 
 int sequenceCount = 0;
 
-// Store the current date (computer date in milliseconds) to timeStamp
-long timeStamp = new Date().getTime();
-String stringToSend = "PING " + sequenceCount + " " + timeStamp + "\n";
-// Format our string into a byte array for the transmission
-byte[] bytesToSend = stringToSend.getBytes(StandardCharsets.UTF_8);
-
 // Initialize the variables we'll need for the ping and results metrics
 long sentTime = 0;
 long receivedPacketTime = 0;
 long roundTripTime = 0;
-long min = 0;
-long max = 0;
+long min = -1;
+long max = -1;
 int totalTimes = 0;
 
 // This section is taken and modified from the booksite's UDPEchoClient.java
@@ -68,6 +55,12 @@ int totalTimes = 0;
 boolean minmaxSet = false;
 boolean receivedResponse = false;
 do {
+      // Store the current date (computer date in milliseconds) to timeStamp
+        long timeStamp = new Date().getTime();
+        String stringToSend = "PING " + sequenceCount + " " + timeStamp + "\n";
+        // Format our string into a byte array for the transmission
+        byte[] bytesToSend = stringToSend.getBytes(StandardCharsets.UTF_8);
+
       receivedResponse = false; // Each ping loop, we initialize this flag false until a response is received.
       DatagramPacket sendPacket = new DatagramPacket(bytesToSend,  // Sending packet
         bytesToSend.length, serverAddress, serverPort);
@@ -102,9 +95,7 @@ do {
             
             // System.out.println("Received: " + new String(receivePacket.getData()) + );
         }
-        else {
-            System.out.println("No response -- giving up.");
-        }
+        
       
         // "naive method", we set the first ping response timings as both min and max
         if (minmaxSet == false && receivedResponse == true) {
@@ -125,17 +116,19 @@ do {
         totalTimes += roundTripTime; // add RTT to sum of times
         sequenceCount++; // Increment 'til 10 tries, success or fail, are made
       
-    } while (sequenceCount < 9); // (Break at 9 because we index the sequence count from 0)
+    } while (sequenceCount < 10);
 
 
     
     // Print ping statistics
-    System.out.println("Min latency: " + min);
-    System.out.println("Max latency: " + max);
-    int avgRTT = totalTimes / 10;
-    System.out.println("Average Round Trip Time: " + avgRTT);
-    // socket.close();
+    if (min == -1 || max == -1) {
+        System.out.println("No ping responses were received over 10 attempts.");
+    }
+    else {
+        System.out.println("Min latency: " + min);
+        System.out.println("Max latency: " + max);
+        int avgRTT = totalTimes / 10;
+        System.out.println("Average Round Trip Time: " + avgRTT);
+    }
   }
- }
 }
-
