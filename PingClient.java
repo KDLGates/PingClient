@@ -41,7 +41,7 @@ public class PingClient {
 // Create a datagram packet to hold incomming UDP packet.
             DatagramPacket request = new DatagramPacket(new byte[1024], 1024);
 // Block until the host receives a UDP packet.
-            socket.receive(request);
+//          socket.receive(request);
 
 /* Presumed Server Part
 // Print the received data.
@@ -52,34 +52,40 @@ InetAddress serverAddress = InetAddress.getByName(args[0]);  // Server address
 // Convert input String to bytes using the default character encoding
 
 // Assign server port
-int servPort = Integer.parseInt(args[1]);
+int serverPort = Integer.parseInt(args[1]);
 
 int sequenceCount = 0;
 // How do we format the time in the message string?
-String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-String stringToSend = "PING " + sequenceCount + timeStamp + "\r\n";
+// String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+long timeStamp = new Date().getTime();
+String stringToSend = "PING " + sequenceCount + " " + timeStamp + "\n";
 byte[] bytesToSend = stringToSend.getBytes(StandardCharsets.UTF_8);
-DatagramPacket sendPacket = new DatagramPacket(bytesToSend,  // Sending packet
-        bytesToSend.length, serverAddress, servPort);
-DatagramPacket receivePacket =                              // Receiving packet
-        new DatagramPacket(new byte[bytesToSend.length], bytesToSend.length);
+
 // int roundTripTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
-int roundTripTime = 0;
-int min = 0;
-int max = 0;
+long sentTime = 0;
+long receivedPacketTime = 0;
+long roundTripTime = 0;
+long min = 0;
+long max = 0;
 int totalTimes = 0;
-int sentTime = 0;
-int receivedPacketTime = 0;
 
 // This section is taken and modified from the booksite's UDPEchoClient.java
 // For 10 seconds, we'll make 10 Echo attempts
 
 boolean receivedResponse = false;
 do {
+      receivedResponse = false; // Each ping loop, we initialize this flag false until a response is received.
+      DatagramPacket sendPacket = new DatagramPacket(bytesToSend,  // Sending packet
+        bytesToSend.length, serverAddress, serverPort);
       socket.send(sendPacket);          // Send the ping string
-      sentTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
+      // sentTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
+      sentTime = new Date().getTime(); // Mark the time we sent the ping
+      socket.setSoTimeout(1000); // Set the timeout delay of 1000ms
       
       try {
+        DatagramPacket receivePacket =                              // Receiving packet
+        new DatagramPacket(new byte[bytesToSend.length], bytesToSend.length);
+        
         socket.receive(receivePacket);  // Attempt ping reply reception
         
         if (!receivePacket.getAddress().equals(serverAddress))  // Check source
@@ -93,8 +99,9 @@ do {
      
       
         if (receivedResponse) {
-            int initialTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
-            receivedPacketTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
+            // initialTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
+            receivedPacketTime = new Date().getTime();
+            // receivedPacketTime = Integer.parseInt(new SimpleDateFormat("S").format(new Date()));
             
             roundTripTime = receivedPacketTime - sentTime;
             System.out.println("Ping response received. Latency: " + roundTripTime);
