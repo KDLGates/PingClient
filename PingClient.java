@@ -65,7 +65,7 @@ int totalTimes = 0;
 
 // This section is taken and modified from the booksite's UDPEchoClient.java
 // For 10 seconds, we'll make 10 Echo attempts
-
+boolean minmaxSet = false;
 boolean receivedResponse = false;
 do {
       receivedResponse = false; // Each ping loop, we initialize this flag false until a response is received.
@@ -106,10 +106,11 @@ do {
             System.out.println("No response -- giving up.");
         }
       
-        // "naive method", we set the initial ping result as both min and max
-        if (sequenceCount == 0) {
+        // "naive method", we set the first ping response timings as both min and max
+        if (minmaxSet == false && receivedResponse == true) {
             min = receivedPacketTime - sentTime;
-            max = receivedPacketTime - sentTime;
+            max = min;
+            minmaxSet = true;
         }
         
         if(roundTripTime > max)
